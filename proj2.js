@@ -19,6 +19,12 @@ var polygons = [];
 var points = [];
 var colors = [];
 
+//perspective stuff
+var top;
+var bottom;
+var r;
+var l;
+
 
 function main()
 {
@@ -26,6 +32,7 @@ function main()
   var fileInput = document.getElementById('fileInput');
   var inputDiv = document.getElementById('inputDiv');
   fileInput.addEventListener('change', function (e) {
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
     vertices = [];
     colors = [];
     polygons = [];
@@ -52,11 +59,16 @@ function main()
           //console.log(nrVertices);
           //console.log(nrPolygons);
           var i = 0;
+          // what initial values should we give bot, top, R, L
+
           for (i = 9; i < nrVertices + 9; i++) {
             var coords = data[i].split(" ");
             vertices.push(vec4( parseFloat(coords[0]), parseFloat(coords[1]),  parseFloat(coords[2]), 1.0 ));
             //colors.push(vec4(1.0, 0.0, 0.0, 1.0));
-            console.log(coords[0] + " " + coords[1] + " " + coords[2]);
+            //console.log(coords[0] + " " + coords[1] + " " + coords[2]);
+
+            // we have to find the top, bottom, right and left for the perspective
+
           }
           console.log("---------------------------------");
           const j = i;
@@ -190,7 +202,7 @@ function render() {
 
 
   // Set clear color
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  //gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
   gl.enable(gl.DEPTH_TEST);
 
@@ -220,7 +232,7 @@ function render() {
     	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	//gl.drawArrays(gl.POINTS, 0, points.length);
-	gl.drawArrays(gl.TRIANGLES, 0, vertices.length);
+	gl.drawArrays(gl.TRIANGLES, 0, points.length);
 
 	//console.log(theta);
 
@@ -251,7 +263,7 @@ function poly(a, b, c)
         console.log(indices[i] + " --> " + vertices[indices[i]]);
         console.log("nr of vertices = " + vertices.length);
         console.log("nr of points = " + points.length);
-        colors.push(vec4(1.0, 0.0, 0.0, 1.0));
+        colors.push(vec4(1.0, 1.0, 1.0, 1.0));
         console.log("nr of colors = " + colors.length);
         //colors.push( vertexColors[indices[i]] );
 
