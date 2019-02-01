@@ -16,6 +16,8 @@ var theta = 0;
 var alpha = 0;
 var vertices = [];
 var polygons = [];
+var points = [];
+var colors = [];
 
 
 function main()
@@ -27,6 +29,7 @@ function main()
     vertices = [];
     colors = [];
     polygons = [];
+    points = [];
     var file = fileInput.files[0];
     var reader = new FileReader();
     reader.onload = function (e) {
@@ -46,83 +49,24 @@ function main()
             return parseInt(v);
           });
           var nrPolygons = nrPolygonsArr[0];
-          console.log(nrVertices);
-          console.log(nrPolygons);
+          //console.log(nrVertices);
+          //console.log(nrPolygons);
           var i = 0;
           for (i = 9; i < nrVertices + 9; i++) {
             var coords = data[i].split(" ");
             vertices.push(vec4( parseFloat(coords[0]), parseFloat(coords[1]),  parseFloat(coords[2]), 1.0 ));
-            colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+            //colors.push(vec4(1.0, 0.0, 0.0, 1.0));
             console.log(coords[0] + " " + coords[1] + " " + coords[2]);
           }
           console.log("---------------------------------");
           const j = i;
           for (i = j; i < nrPolygons + j; i++) {
             var pols = data[i].split(" ");
-            polygons.push(vec3( parseFloat(pols[0]), parseFloat(pols[1]),  parseFloat(pols[2])));
+            //polygons.push(vec3( parseFloat(pols[0]), parseFloat(pols[1]),  parseFloat(pols[2])));
+            poly(parseFloat(pols[1]), parseFloat(pols[2]),  parseFloat(pols[3]));
             console.log(pols[1] + " " + pols[2] + " " + pols[3]);
           }
-          //Create the buffer object
-        	var vBuffer = gl.createBuffer();
 
-        	//Bind the buffer object to a target
-        	//The target tells WebGL what type of data the buffer object contains,
-        	//allowing it to deal with the contents correctly
-        	//gl.ARRAY_BUFFER - specifies that the buffer object contains vertex data
-        	gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-
-        	//Allocate storage and write data to the buffer
-        	//Write the data specified by the second parameter into the buffer object
-        	//bound to the first parameter
-        	//We use flatten because the data must be a single array of ints, uints, or floats (float32 or float64)
-        	//This is a typed array, and we can't use push() or pop() with it
-        	//
-        	//The last parameter specifies a hint about how the program is going to use the data
-        	//stored in the buffer object. This hint helps WebGL optimize performance but will not stop your
-        	//program from working if you get it wrong.
-        	//STATIC_DRAW - buffer object data will be specified once and used many times to draw shapes
-        	//DYNAMIC_DRAW - buffer object data will be specified repeatedly and used many times to draw shapes
-        	gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
-
-        	//Get the location of the shader's vPosition attribute in the GPU's memory
-        	var vPosition = gl.getAttribLocation(program, "vPosition");
-
-        	//Specifies how shader should pull the data
-        	//A hidden part of gl.vertexAttribPointer is that it binds the current ARRAY_BUFFER to the attribute.
-        	//In other words now this attribute is bound to vColor. That means we're free to bind something else
-        	//to the ARRAY_BUFFER bind point. The attribute will continue to use vPosition.
-        	gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
-
-        	//Turns the attribute on
-        	gl.enableVertexAttribArray(vPosition);
-
-        	//Specify the vertex size
-        	var offsetLoc = gl.getUniformLocation(program, "vPointSize");
-        	gl.uniform1f(offsetLoc, 10.0);
-
-        	var cBuffer = gl.createBuffer();
-        	gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-        	gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
-
-        	var vColor = gl.getAttribLocation(program, "vColor");
-        	gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-        	gl.enableVertexAttribArray(vColor);
-
-        	//This is how we handle extents
-        	//We need to change this to see things once we've added perspective
-        	//var thisProj = ortho(-5, 5, -5, 5, -5, 100);
-
-        	var  fovy = 30.0;
-        	var thisProj = perspective(fovy, 1, .1, 100);
-
-        	var projMatrix = gl.getUniformLocation(program, 'projMatrix');
-        	gl.uniformMatrix4fv(projMatrix, false, flatten(thisProj));
-
-
-        	// Set clear color
-        	gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
-        	gl.enable(gl.DEPTH_TEST);
 
         	//Necessary for animation
         	render();
@@ -188,6 +132,68 @@ function main()
 var id;
 
 function render() {
+  //Create the buffer object
+  var vBuffer = gl.createBuffer();
+
+  //Bind the buffer object to a target
+  //The target tells WebGL what type of data the buffer object contains,
+  //allowing it to deal with the contents correctly
+  //gl.ARRAY_BUFFER - specifies that the buffer object contains vertex data
+  gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+
+  //Allocate storage and write data to the buffer
+  //Write the data specified by the second parameter into the buffer object
+  //bound to the first parameter
+  //We use flatten because the data must be a single array of ints, uints, or floats (float32 or float64)
+  //This is a typed array, and we can't use push() or pop() with it
+  //
+  //The last parameter specifies a hint about how the program is going to use the data
+  //stored in the buffer object. This hint helps WebGL optimize performance but will not stop your
+  //program from working if you get it wrong.
+  //STATIC_DRAW - buffer object data will be specified once and used many times to draw shapes
+  //DYNAMIC_DRAW - buffer object data will be specified repeatedly and used many times to draw shapes
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
+
+  //Get the location of the shader's vPosition attribute in the GPU's memory
+  var vPosition = gl.getAttribLocation(program, "vPosition");
+
+  //Specifies how shader should pull the data
+  //A hidden part of gl.vertexAttribPointer is that it binds the current ARRAY_BUFFER to the attribute.
+  //In other words now this attribute is bound to vColor. That means we're free to bind something else
+  //to the ARRAY_BUFFER bind point. The attribute will continue to use vPosition.
+  gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+
+  //Turns the attribute on
+  gl.enableVertexAttribArray(vPosition);
+
+  //Specify the vertex size
+  var offsetLoc = gl.getUniformLocation(program, "vPointSize");
+  gl.uniform1f(offsetLoc, 10.0);
+
+  var cBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+
+  var vColor = gl.getAttribLocation(program, "vColor");
+  gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vColor);
+
+  //This is how we handle extents
+  //We need to change this to see things once we've added perspective
+  //var thisProj = ortho(-5, 5, -5, 5, -5, 100);
+
+  var  fovy = 30.0;
+  var thisProj = perspective(fovy, 1, .1, 100);
+
+  var projMatrix = gl.getUniformLocation(program, 'projMatrix');
+  gl.uniformMatrix4fv(projMatrix, false, flatten(thisProj));
+
+
+  // Set clear color
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+  gl.enable(gl.DEPTH_TEST);
+
 	var rotMatrix = rotate(0, vec3(-1, -1, 0));
 	//var rotMatrix = rotateY(theta);
 	//var rotMatrix2 = rotateX(45);
@@ -227,30 +233,10 @@ function render() {
 	//}
 
 }
-/*
-function quad(a, b, c, d)
-{
-    var vertices = [
-        vec4( -0.5, -0.5,  0.5, 1.0 ),
-        vec4( -0.5,  0.5,  0.5, 1.0 ),
-        vec4(  0.5,  0.5,  0.5, 1.0 ),
-        vec4(  0.5, -0.5,  0.5, 1.0 ),
-        vec4( -0.5, -0.5, -0.5, 1.0 ),
-        vec4( -0.5,  0.5, -0.5, 1.0 ),
-        vec4(  0.5,  0.5, -0.5, 1.0 ),
-        vec4(  0.5, -0.5, -0.5, 1.0 )
-    ];
 
-    var vertexColors = [
-        [ 0.0, 0.0, 0.0, 1.0 ],  // black
-        [ 1.0, 0.0, 0.0, 1.0 ],  // red
-        [ 1.0, 1.0, 0.0, 1.0 ],  // yellow
-        [ 0.0, 1.0, 0.0, 1.0 ],  // green
-        [ 0.0, 0.0, 1.0, 1.0 ],  // blue
-        [ 1.0, 0.0, 1.0, 1.0 ],  // magenta
-        [ 0.0, 1.0, 1.0, 1.0 ],  // cyan
-        [ 1.0, 1.0, 1.0, 1.0 ]   // white
-    ];
+function poly(a, b, c)
+{
+  console.log("abc = " + a + " " + b + " " + c);
 
     // We need to parition the quad into two triangles in order for
     // WebGL to be able to render it.  In this case, we create two
@@ -258,14 +244,19 @@ function quad(a, b, c, d)
 
     //vertex color assigned by the index of the vertex
 
-    var indices = [ a, b, c, a, c, d ];
+    var indices = [ a, b, c];
 
     for ( var i = 0; i < indices.length; ++i ) {
         points.push( vertices[indices[i]] );
+        console.log(indices[i] + " --> " + vertices[indices[i]]);
+        console.log("nr of vertices = " + vertices.length);
+        console.log("nr of points = " + points.length);
+        colors.push(vec4(1.0, 0.0, 0.0, 1.0));
+        console.log("nr of colors = " + colors.length);
         //colors.push( vertexColors[indices[i]] );
 
         // for solid colored faces use
-        colors.push(vertexColors[a]);
+        //colors.push(vertexColors[a]);
 
     }
-} */
+}
