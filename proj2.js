@@ -196,7 +196,7 @@ function render() {
 	//var ctMatrix = mult(translateMatrix, tempMatrix);
 	var ctMatrix = mult(translateMatrix, rotMatrix);
 
-	theta += 0.05;
+	//theta += 0.05;
 	//alpha += 0.005;
 
 	var eye = vec3(2 + theta, 2 + theta, 2 + theta);
