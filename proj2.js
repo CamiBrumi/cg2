@@ -70,13 +70,13 @@ function main()
             // we have to find the top, bottom, right and left for the perspective
 
           }
-          console.log("---------------------------------");
+          //console.log("---------------------------------");
           const j = i;
           for (i = j; i < nrPolygons + j; i++) {
             var pols = data[i].split(" ");
             //polygons.push(vec3( parseFloat(pols[0]), parseFloat(pols[1]),  parseFloat(pols[2])));
             poly(parseFloat(pols[1]), parseFloat(pols[2]),  parseFloat(pols[3]));
-            console.log(pols[1] + " " + pols[2] + " " + pols[3]);
+            //console.log(pols[1] + " " + pols[2] + " " + pols[3]);
           }
 
 
@@ -99,7 +99,7 @@ function main()
 	gl = WebGLUtils.setupWebGL(canvas, undefined);
 	if (!gl)
 	{
-		console.log('Failed to get the rendering context for WebGL');
+		//console.log('Failed to get the rendering context for WebGL');
 		return;
 	}
 
@@ -248,7 +248,7 @@ function render() {
 
 function poly(a, b, c)
 {
-  console.log("abc = " + a + " " + b + " " + c);
+  //console.log("abc = " + a + " " + b + " " + c);
 
     // We need to parition the quad into two triangles in order for
     // WebGL to be able to render it.  In this case, we create two
@@ -260,11 +260,11 @@ function poly(a, b, c)
 
     for ( var i = 0; i < indices.length; ++i ) {
         points.push( vertices[indices[i]] );
-        console.log(indices[i] + " --> " + vertices[indices[i]]);
-        console.log("nr of vertices = " + vertices.length);
-        console.log("nr of points = " + points.length);
+        //console.log(indices[i] + " --> " + vertices[indices[i]]);
+        //console.log("nr of vertices = " + vertices.length);
+        //console.log("nr of points = " + points.length);
         colors.push(vec4(1.0, 1.0, 1.0, 1.0));
-        console.log("nr of colors = " + colors.length);
+        //console.log("nr of colors = " + colors.length);
         //colors.push( vertexColors[indices[i]] );
 
         // for solid colored faces use
