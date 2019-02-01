@@ -1,3 +1,5 @@
+// what was quad for??
+// scissors do not work
 /*
  * Some comments quoted from WebGL Programming Guide
  * by Matsuda and Lea, 1st edition.
@@ -12,10 +14,61 @@ var points;
 var colors;
 var theta = 0;
 var alpha = 0;
+var vertices = [];
+var polygons = [];
 
 
 function main()
 {
+  // We process the data in the file
+  var fileInput = document.getElementById('fileInput');
+  var inputDiv = document.getElementById('inputDiv');
+  fileInput.addEventListener('change', function (e) {
+    vertices = [];
+    polygons = [];
+    var file = fileInput.files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        var data = reader.result.split(/\r\n?|\n/);
+        if (data[0] !== "ply") {
+          alert('File does not contain "ply"');
+        } else {
+
+          // number of vertices
+          var nrVerticesArr = data[2].match(/\d+/).map(function (v) {
+            return parseInt(v);
+          });
+          var nrVertices = nrVerticesArr[0];
+
+          // number of polygons
+          var nrPolygonsArr = data[6].match(/\d+/).map(function (v) {
+            return parseInt(v);
+          });
+          var nrPolygons = nrPolygonsArr[0];
+          console.log(nrVertices);
+          console.log(nrPolygons);
+          var i = 0;
+          for (i = 9; i < nrVertices + 9; i++) {
+            var coords = data[i].split(" ");
+            vertices.push(vec4( parseFloat(coords[0]), parseFloat(coords[1]),  parseFloat(coords[2]), 1.0 ));
+            console.log(coords[0] + " " + coords[1] + " " + coords[2]);
+          }
+          console.log("---------------------------------");
+          const j = i;
+          for (i = j; i < nrPolygons + j; i++) {
+            var pols = data[i].split(" ");
+            polygons.push(vec3( parseFloat(pols[0]), parseFloat(pols[1]),  parseFloat(pols[2])));
+            console.log(pols[1] + " " + pols[2] + " " + pols[3]);
+          }
+
+        }
+
+    }
+    reader.readAsText(file);
+
+  });
+
+
 	// Retrieve <canvas> element
 	var canvas = document.getElementById('webgl');
 

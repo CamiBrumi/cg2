@@ -33,12 +33,20 @@
     <script src="lib/initShaders.js"></script>
     <script src="lib/MV.js"></script>
 
-    <script src="example.js"></script>
+    <script src="proj2.js"></script>
 
   </head>
 
   <body onload="main()">
+    <!--This is the input part.-->
+    <div id="page-wrapper">
 
+        <h1 id="header">File Mode</h1>
+        <div id="inputDiv">
+            Select a text file:
+            <input type="file" id="fileInput"/>
+        </div>
+    </div>
     <canvas id="webgl" width="400" height="400">
     	Please use a browser that supports the "canvas" tag.
     </canvas>
