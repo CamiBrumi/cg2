@@ -11,13 +11,16 @@ var gl;
 var program;
 var canvas;
 
-var colors = [];
 var theta = 0;
 var alpha = 0;
 var vertices = [];
 var polygons = [];
 var points = [];
-var colors = [];
+var colors = [
+  vec4(1.0, 1.0, 1.0, 1.0),
+  vec4(1.0, 1.0, 1.0, 1.0),
+  vec4(1.0, 1.0, 1.0, 1.0)
+];
 
 //perspective stuff
 var tp;
@@ -40,7 +43,7 @@ function main()
   fileInput.addEventListener('change', function (e) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     vertices = [];
-    colors = [];
+    //colors = [];
     polygons = [];
     points = [];
     var file = fileInput.files[0];
@@ -113,6 +116,10 @@ function main()
             //console.log(pols[1] + " " + pols[2] + " " + pols[3]);
           }
 
+          gl.enable(gl.DEPTH_TEST);
+
+          // Clear the canvas AND the depth buffer.
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         	//Necessary for animation
         	render();
@@ -151,6 +158,8 @@ function main()
 	//canvas is the window, and viewport is the viewing area within that window
 		//This tells WebGL the -1 +1 clip space maps to 0 <-> gl.canvas.width for x and 0 <-> gl.canvas.height for y
 	gl.viewport( 0, 0, canvas.width, canvas.height );
+
+
 
 	/**********************************
 	* Points, Lines, and Fill
@@ -192,8 +201,8 @@ function main()
           case '-':
               tz += 0.02;
               break;
-          render();
       }
+      render();
   }
 
 
@@ -201,139 +210,102 @@ function main()
 }
 
 var id;
+ function render() {
+  console.log(points.length);
+  for (var i = 0; i < (points.length)/3; i++) {
+    console.log("----" + i);
+    //console.log(points[i].length);
+    console.log(colors.length);
+    var triang = points.slice(i*3, i*3 + 3);
+    console.log(triang);
 
-function render() {
-  //Create the buffer object
-  var vBuffer = gl.createBuffer();
+    //Create the buffer object
+    var vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(triang), gl.STATIC_DRAW);
 
-  //Bind the buffer object to a target
-  //The target tells WebGL what type of data the buffer object contains,
-  //allowing it to deal with the contents correctly
-  //gl.ARRAY_BUFFER - specifies that the buffer object contains vertex data
-  gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+    var vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
 
-  //Allocate storage and write data to the buffer
-  //Write the data specified by the second parameter into the buffer object
-  //bound to the first parameter
-  //We use flatten because the data must be a single array of ints, uints, or floats (float32 or float64)
-  //This is a typed array, and we can't use push() or pop() with it
-  //
-  //The last parameter specifies a hint about how the program is going to use the data
-  //stored in the buffer object. This hint helps WebGL optimize performance but will not stop your
-  //program from working if you get it wrong.
-  //STATIC_DRAW - buffer object data will be specified once and used many times to draw shapes
-  //DYNAMIC_DRAW - buffer object data will be specified repeatedly and used many times to draw shapes
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
+    var offsetLoc = gl.getUniformLocation(program, "vPointSize");
+    gl.uniform1f(offsetLoc, 10.0);
 
-  //Get the location of the shader's vPosition attribute in the GPU's memory
-  var vPosition = gl.getAttribLocation(program, "vPosition");
+    var cBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
 
-  //Specifies how shader should pull the data
-  //A hidden part of gl.vertexAttribPointer is that it binds the current ARRAY_BUFFER to the attribute.
-  //In other words now this attribute is bound to vColor. That means we're free to bind something else
-  //to the ARRAY_BUFFER bind point. The attribute will continue to use vPosition.
-  gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    var vColor = gl.getAttribLocation(program, "vColor");
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vColor);
 
-  //Turns the attribute on
-  gl.enableVertexAttribArray(vPosition);
+    //This is how we handle extents
+    //We need to change this to see things once we've added perspective
+    //var thisProj = ortho(-5, 5, -5, 5, -5, 100);
 
-  //Specify the vertex size
-  var offsetLoc = gl.getUniformLocation(program, "vPointSize");
-  gl.uniform1f(offsetLoc, 10.0);
+    var xDist = Math.abs(r-l);
+    var yDist = Math.abs(tp-bottom);
+    var zDist = Math.abs(near-far);
+    var eyeDist = Math.max(xDist, yDist, zDist);
 
-  var cBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+    var  fovy = Math.atan((Math.max(xDist, yDist)/2)/eyeDist); // ymax/zmin // height of the bounding box div by 2 then also only distance from eye to the near plane
+    fovy = ((fovy*180)/Math.PI)*2;
 
-  var vColor = gl.getAttribLocation(program, "vColor");
-  gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(vColor);
+    var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    var thisProj = perspective(fovy, aspect, 0.1, 100);
 
-  //This is how we handle extents
-  //We need to change this to see things once we've added perspective
-  //var thisProj = ortho(-5, 5, -5, 5, -5, 100);
+    var projMatrix = gl.getUniformLocation(program, 'projMatrix');
+    gl.uniformMatrix4fv(projMatrix, false, flatten(thisProj));
+    // for proj perspective(fovy, 1, 0, zDist)
 
-  var xDist = Math.abs(r-l);
-  var yDist = Math.abs(tp-bottom);
-  var zDist = Math.abs(near-far);
-  var eyeDist = Math.max(xDist, yDist, zDist);
+    // Set clear color
+    //gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-  var  fovy = Math.atan((Math.max(xDist, yDist)/2)/eyeDist); // ymax/zmin // height of the bounding box div by 2 then also only distance from eye to the near plane
-  fovy = ((fovy*180)/Math.PI)*2;
+    gl.enable(gl.DEPTH_TEST);
 
-  var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-  var thisProj = perspective(fovy, aspect, 0.1, 100);
+  	var rotMatrix = rotate(0, vec3(-1, -1, 0));
+  	//var rotMatrix = rotateY(theta);
+  	//var rotMatrix2 = rotateX(45);
+  	var translateMatrix = translate(tx, ty, tz);
+  	//var tempMatrix = mult(rotMatrix, rotMatrix2);
+  	//var ctMatrix = mult(translateMatrix, tempMatrix);
+  	var ctMatrix = mult(translateMatrix, rotMatrix);
 
-  var projMatrix = gl.getUniformLocation(program, 'projMatrix');
-  gl.uniformMatrix4fv(projMatrix, false, flatten(thisProj));
-  // for proj perspective(fovy, 1, 0, zDist)
+  	//theta += 0.05;
+  	//alpha += 0.005;
 
-  // Set clear color
-  //gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    // 1. get extents, min max xyz
+    // 2. based on extents where do we put the eye and where does the eye look : view ctMatrix
+    // 3. based on extents what is fovy : proj matrix
 
-  gl.enable(gl.DEPTH_TEST);
+    var at = vec3((r+l)/2, (tp+bottom)/2, (near+far)/2); // should be out from the viewing frustum
+  	var eye = vec3(at[0], at[1], eyeDist + near);
+  	var up = vec3(0.0, 1.0, 0.0);
+  	var viewMatrix = lookAt(eye, at, up);
 
-	var rotMatrix = rotate(0, vec3(-1, -1, 0));
-	//var rotMatrix = rotateY(theta);
-	//var rotMatrix2 = rotateX(45);
-	var translateMatrix = translate(tx, ty, tz);
-	//var tempMatrix = mult(rotMatrix, rotMatrix2);
-	//var ctMatrix = mult(translateMatrix, tempMatrix);
-	var ctMatrix = mult(translateMatrix, rotMatrix);
+  	var ctMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
+  	gl.uniformMatrix4fv(ctMatrixLoc, false, flatten(ctMatrix));
 
-	//theta += 0.05;
-	//alpha += 0.005;
+  	var viewMatrixLoc = gl.getUniformLocation(program, "viewMatrix");
+  	gl.uniformMatrix4fv(viewMatrixLoc, false, flatten(viewMatrix));
 
-  // 1. get extents, min max xyz
-  // 2. based on extents where do we put the eye and where does the eye look : view ctMatrix
-  // 3. based on extents what is fovy : proj matrix
+    //gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  /*
-  r = Math.max(x,r);
-  l = Math.min(x, l);
+  	//gl.drawArrays(gl.POINTS, 0, points.length);
+  	gl.drawArrays(gl.LINE_LOOP, 0, triang.length);
 
-  top = Math.max(y,top);
-  bottom = Math.min(y, bottom);
+  	//console.log(theta);
 
-  near = Math.max(z,far);
-  far = Math.min(z, near);
-  */
-
-  /*
-  var xDist = Math.abs(r-l);
-  var yDist = Math.abs(tp-bottom);
-  var zDist = Math.abs(near-far);
-  var eyeDist = Math.max(xDist, yDist, zDist); */
-  var at = vec3((r+l)/2, (tp+bottom)/2, (near+far)/2); // should be out from the viewing frustum
-	var eye = vec3(at[0], at[1], eyeDist + near);
-
-	var up = vec3(0.0, 1.0, 0.0);
-
-	var viewMatrix = lookAt(eye, at, up);
-
-	var ctMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
-	gl.uniformMatrix4fv(ctMatrixLoc, false, flatten(ctMatrix));
-
-	var viewMatrixLoc = gl.getUniformLocation(program, "viewMatrix");
-	gl.uniformMatrix4fv(viewMatrixLoc, false, flatten(viewMatrix));
-
-    	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	//gl.drawArrays(gl.POINTS, 0, points.length);
-	gl.drawArrays(gl.LINE_LOOP, 0, points.length);
-
-	//console.log(theta);
-
-	//if(theta < -90) {
-	//	cancelAnimationFrame(id);
-	//}
-	//else
-	//{
-		id = requestAnimationFrame(render);
-	//}
+  	//if(theta < -90) {
+  	//	cancelAnimationFrame(id);
+  	//}
+  	//else
+  	//{
+  		//id = requestAnimationFrame(render);
+  	//}
+  }
 
 }
-
 function poly(a, b, c)
 {
   //console.log("abc = " + a + " " + b + " " + c);
@@ -344,14 +316,15 @@ function poly(a, b, c)
 
     //vertex color assigned by the index of the vertex
 
-    var indices = [ a, b, c];
 
-    for ( var i = 0; i < indices.length; ++i ) {
-        points.push( vertices[indices[i]] );
+    //points.push( vec3(vertices[a], vertices[b], vertices[c]) );
+    points.push(vertices[a], vertices[b], vertices[c]);
+    //for ( var i = 0; i < indices.length; ++i ) {
+        //points.push( vertices[indices[i]] );
         //console.log(indices[i] + " --> " + vertices[indices[i]]);
         //console.log("nr of vertices = " + vertices.length);
         //console.log("nr of points = " + points.length);
-        colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+        //colors.push(vec4(1.0, 1.0, 1.0, 1.0));
         //console.log("nr of colors = " + colors.length);
         //colors.push( vertexColors[indices[i]] );
 
@@ -359,5 +332,5 @@ function poly(a, b, c)
         //colors.push(vertexColors[a]);
 
 
-    }
+    //}
 }
