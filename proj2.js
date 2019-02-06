@@ -95,8 +95,8 @@ function main()
             tp = Math.max(y,tp);
             bottom = Math.min(y, bottom);
 
-            near = Math.max(z,near);
-            far = Math.min(z, far);
+            far = Math.min(z,far);
+            near = Math.max(z, near);
 
 
             //colors.push(vec4(1.0, 0.0, 0.0, 1.0));
@@ -112,13 +112,6 @@ function main()
             poly(parseFloat(pols[1]), parseFloat(pols[2]),  parseFloat(pols[3]));
             //console.log(pols[1] + " " + pols[2] + " " + pols[3]);
           }
-          console.log(vertices.length);
-          console.log(points.length);
-          console.log("--------");
-          console.log(polygons.length);
-          //console.log(vertices);
-          console.log("--------");
-          //console.log(points);
 
 
         	//Necessary for animation
@@ -181,29 +174,25 @@ function main()
   window.onkeypress = function(event) {
       var key = event.key;
       switch(key) {
-          case 'w':
-              tx += 0.01;
-              render();
           case 'd':
-
-              userPoints = [];
-              colors = [];
-              gl.clear(gl.ARRAY_BUFFER);
-              console.log(userPoints);
-              draw = true;
-              gl.clearColor(1.0, 1.0, 1.0, 1.0); // we can avoid this if we want to use the same background
-              gl.clear(gl.COLOR_BUFFER_BIT);
-              inputDiv.style.visibility = "hidden";
-              header.innerHTML = "Draw Mode";
+              tx -= 0.02;
               break;
-
-          case 'c':
-              colorIdx= (colorIdx + 1)%4; // this iterates through the array of colors, that is a global variable
-              if (!draw) { // if we are not in draw mode
-                  drawPolylineFromInput();
-              } else { //if we are in draw mode
-                  render();
-              }
+          case 'a':
+              tx += 0.02; //same
+              break;
+          case 'w':
+              ty -= 0.02;
+              break;
+          case 's':
+              ty += 0.02; //same
+              break;
+          case '+':
+              tz -= 0.02;
+              break;
+          case '-':
+              tz += 0.02;
+              break;
+          render();
       }
   }
 
@@ -264,8 +253,13 @@ function render() {
   //We need to change this to see things once we've added perspective
   //var thisProj = ortho(-5, 5, -5, 5, -5, 100);
 
-  var  fovy = Math.atan(tp/near); // ymax/zmin // height of the bounding box div by 2 then also only distance from eye to the near plane
+  var xDist = Math.abs(r-l);
+  var yDist = Math.abs(tp-bottom);
+  var zDist = Math.abs(near-far);
+  var eyeDist = Math.max(xDist, yDist, zDist);
 
+  var  fovy = Math.atan((Math.max(xDist, yDist)/2)/eyeDist); // ymax/zmin // height of the bounding box div by 2 then also only distance from eye to the near plane
+  fovy = ((fovy*180)/Math.PI)*2;
 
   var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   var thisProj = perspective(fovy, aspect, 0.1, 100);
@@ -305,8 +299,14 @@ function render() {
   far = Math.min(z, near);
   */
 
-	var eye = vec3((r-l)/2, (tp-bottom)/2, near + 100);
-	var at = vec3((r-l)/2, (tp-bottom)/2, (near - far)/2); // should be out from the viewing frustum
+  /*
+  var xDist = Math.abs(r-l);
+  var yDist = Math.abs(tp-bottom);
+  var zDist = Math.abs(near-far);
+  var eyeDist = Math.max(xDist, yDist, zDist); */
+  var at = vec3((r+l)/2, (tp+bottom)/2, (near+far)/2); // should be out from the viewing frustum
+	var eye = vec3(at[0], at[1], eyeDist + near);
+
 	var up = vec3(0.0, 1.0, 0.0);
 
 	var viewMatrix = lookAt(eye, at, up);
