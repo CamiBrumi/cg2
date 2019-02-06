@@ -202,6 +202,10 @@ function main()
               tz += 0.02;
               break;
       }
+      gl.enable(gl.DEPTH_TEST);
+
+      // Clear the canvas AND the depth buffer.
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       render();
   }
 
@@ -279,7 +283,7 @@ var id;
     // 3. based on extents what is fovy : proj matrix
 
     var at = vec3((r+l)/2, (tp+bottom)/2, (near+far)/2); // should be out from the viewing frustum
-  	var eye = vec3(at[0], at[1], eyeDist + near);
+  	var eye = vec3(at[0], at[1], eyeDist + near*2);
   	var up = vec3(0.0, 1.0, 0.0);
   	var viewMatrix = lookAt(eye, at, up);
 
