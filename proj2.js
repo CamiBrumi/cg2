@@ -202,10 +202,7 @@ function main()
               tz += 0.02;
               break;
       }
-      gl.enable(gl.DEPTH_TEST);
 
-      // Clear the canvas AND the depth buffer.
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       render();
   }
 
@@ -215,13 +212,17 @@ function main()
 
 var id;
  function render() {
-  console.log(points.length);
+   gl.enable(gl.DEPTH_TEST);
+
+   // Clear the canvas AND the depth buffer.
+   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  //console.log(points.length);
   for (var i = 0; i < (points.length)/3; i++) {
-    console.log("----" + i);
+    //console.log("----" + i);
     //console.log(points[i].length);
-    console.log(colors.length);
+    //console.log(colors.length);
     var triang = points.slice(i*3, i*3 + 3);
-    console.log(triang);
+    //console.log(triang);
 
     //Create the buffer object
     var vBuffer = gl.createBuffer();
@@ -265,7 +266,7 @@ var id;
     // Set clear color
     //gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-    gl.enable(gl.DEPTH_TEST);
+    //gl.enable(gl.DEPTH_TEST);
 
   	var rotMatrix = rotate(0, vec3(-1, -1, 0));
   	//var rotMatrix = rotateY(theta);
