@@ -1,5 +1,5 @@
-// what was quad for??
-// scissors do not work
+
+// how to make the drawing
 /*
  * Some comments quoted from WebGL Programming Guide
  * by Matsuda and Lea, 1st edition.
@@ -20,10 +20,16 @@ var points = [];
 var colors = [];
 
 //perspective stuff
-var top;
+var tp;
 var bottom;
 var r;
 var l;
+var near;
+var far;
+
+var tx = 0;
+var ty = 0;
+var tz = 0;
 
 
 function main()
@@ -58,18 +64,46 @@ function main()
           var nrPolygons = nrPolygonsArr[0];
           //console.log(nrVertices);
           //console.log(nrPolygons);
-          var i = 0;
-          // what initial values should we give bot, top, R, L
 
-          for (i = 9; i < nrVertices + 9; i++) {
+
+          // what initial values
+          var coords = data[9].split(" ");
+          var x = parseFloat(coords[0]);
+          var y = parseFloat(coords[1]);
+          var z = parseFloat(coords[2]);
+          vertices.push(vec4( x, y, z, 1.0 ));
+          tp = x;
+          bottom = x;
+          r = y;
+          l = y;
+          far = z;
+          near = z;
+
+          var i = 0;
+          for (i =10; i < nrVertices + 9; i++) {
             var coords = data[i].split(" ");
-            vertices.push(vec4( parseFloat(coords[0]), parseFloat(coords[1]),  parseFloat(coords[2]), 1.0 ));
+            var x = parseFloat(coords[0]);
+            var y = parseFloat(coords[1]);
+            var z = parseFloat(coords[2]);
+            vertices.push(vec4( x, y, z, 1.0 ));
+
+            //now we we check for the max x, y and z in order to plug these values in the perspective function
+            //these are model coordinates, we have to pass them to eye coordinates
+            r = Math.max(x,r);
+            l = Math.min(x, l);
+
+            tp = Math.max(y,tp);
+            bottom = Math.min(y, bottom);
+
+            far = Math.max(z,far);
+            near = Math.min(z, near);
+
+
             //colors.push(vec4(1.0, 0.0, 0.0, 1.0));
             //console.log(coords[0] + " " + coords[1] + " " + coords[2]);
-
-            // we have to find the top, bottom, right and left for the perspective
-
           }
+          //console.log(r + " ")
+
           //console.log("---------------------------------");
           const j = i;
           for (i = j; i < nrPolygons + j; i++) {
@@ -78,6 +112,13 @@ function main()
             poly(parseFloat(pols[1]), parseFloat(pols[2]),  parseFloat(pols[3]));
             //console.log(pols[1] + " " + pols[2] + " " + pols[3]);
           }
+          console.log(vertices.length);
+          console.log(points.length);
+          console.log("--------");
+          console.log(polygons.length);
+          //console.log(vertices);
+          console.log("--------");
+          //console.log(points);
 
 
         	//Necessary for animation
@@ -136,6 +177,35 @@ function main()
 	quad( 4, 5, 6, 7 );
 	quad( 5, 4, 0, 1 ); */
 
+  //this is the code that handles thevent when a key is pressed
+  window.onkeypress = function(event) {
+      var key = event.key;
+      switch(key) {
+          case 'w':
+              tx += 0.01;
+              render();
+          case 'd':
+
+              userPoints = [];
+              colors = [];
+              gl.clear(gl.ARRAY_BUFFER);
+              console.log(userPoints);
+              draw = true;
+              gl.clearColor(1.0, 1.0, 1.0, 1.0); // we can avoid this if we want to use the same background
+              gl.clear(gl.COLOR_BUFFER_BIT);
+              inputDiv.style.visibility = "hidden";
+              header.innerHTML = "Draw Mode";
+              break;
+
+          case 'c':
+              colorIdx= (colorIdx + 1)%4; // this iterates through the array of colors, that is a global variable
+              if (!draw) { // if we are not in draw mode
+                  drawPolylineFromInput();
+              } else { //if we are in draw mode
+                  render();
+              }
+      }
+  }
 
 
 
@@ -194,12 +264,15 @@ function render() {
   //We need to change this to see things once we've added perspective
   //var thisProj = ortho(-5, 5, -5, 5, -5, 100);
 
-  var  fovy = 30.0;
-  var thisProj = perspective(fovy, 1, .1, 100);
+  var  fovy = Math.atan(tp/near); // ymax/zmin // height of the bounding box div by 2 then also only distance from eye to the near plane
+
+
+  var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+  var thisProj = perspective(fovy, aspect, 0.1, 100);
 
   var projMatrix = gl.getUniformLocation(program, 'projMatrix');
   gl.uniformMatrix4fv(projMatrix, false, flatten(thisProj));
-
+  // for proj perspective(fovy, 1, 0, zDist)
 
   // Set clear color
   //gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -209,7 +282,7 @@ function render() {
 	var rotMatrix = rotate(0, vec3(-1, -1, 0));
 	//var rotMatrix = rotateY(theta);
 	//var rotMatrix2 = rotateX(45);
-	var translateMatrix = translate(0, 0, 0);
+	var translateMatrix = translate(tx, ty, tz);
 	//var tempMatrix = mult(rotMatrix, rotMatrix2);
 	//var ctMatrix = mult(translateMatrix, tempMatrix);
 	var ctMatrix = mult(translateMatrix, rotMatrix);
@@ -217,9 +290,24 @@ function render() {
 	//theta += 0.05;
 	//alpha += 0.005;
 
-	var eye = vec3(2 + theta, 2 + theta, 2 + theta);
-	const at = vec3(0.0, 0.0, 0.0);
-	const up = vec3(0.0, 1.0, 0.0);
+  // 1. get extents, min max xyz
+  // 2. based on extents where do we put the eye and where does the eye look : view ctMatrix
+  // 3. based on extents what is fovy : proj matrix
+
+  /*
+  r = Math.max(x,r);
+  l = Math.min(x, l);
+
+  top = Math.max(y,top);
+  bottom = Math.min(y, bottom);
+
+  near = Math.max(z,far);
+  far = Math.min(z, near);
+  */
+
+	var eye = vec3((r-l)/2, (tp-bottom)/2, near + 100);
+	var at = vec3((r-l)/2, (tp-bottom)/2, (near - far)/2); // should be out from the viewing frustum
+	var up = vec3(0.0, 1.0, 0.0);
 
 	var viewMatrix = lookAt(eye, at, up);
 
@@ -232,7 +320,7 @@ function render() {
     	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	//gl.drawArrays(gl.POINTS, 0, points.length);
-	gl.drawArrays(gl.TRIANGLES, 0, points.length);
+	gl.drawArrays(gl.LINE_LOOP, 0, points.length);
 
 	//console.log(theta);
 
@@ -269,6 +357,7 @@ function poly(a, b, c)
 
         // for solid colored faces use
         //colors.push(vertexColors[a]);
+
 
     }
 }
