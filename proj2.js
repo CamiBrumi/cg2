@@ -95,8 +95,8 @@ function main()
             tp = Math.max(y,tp);
             bottom = Math.min(y, bottom);
 
-            far = Math.max(z,far);
-            near = Math.min(z, near);
+            near = Math.max(z,near);
+            far = Math.min(z, far);
 
 
             //colors.push(vec4(1.0, 0.0, 0.0, 1.0));
