@@ -16,6 +16,7 @@ var alpha = 0;
 var vertices = [];
 var polygons = [];
 var points = [];
+var normals = [];
 var colors = [
   vec4(1.0, 1.0, 1.0, 1.0),
   vec4(1.0, 1.0, 1.0, 1.0),
@@ -46,6 +47,7 @@ function main()
     //colors = [];
     polygons = [];
     points = [];
+    normals = [];
     var file = fileInput.files[0];
     var reader = new FileReader();
     reader.onload = function (e) {
@@ -201,6 +203,9 @@ function main()
           case '-':
               tz += 0.02;
               break;
+          case 'p':
+              pulse();
+              break;
       }
 
       render();
@@ -311,31 +316,49 @@ var id;
   }
 
 }
+
+//creates the normal vector of the triangle formed by the vertices a, b and c and adds it to the normals array
+function newellMethod(a, b, c) {
+  var nx = (a[1] - b[1])*(a[2] - b[2]) + (b[1] - c[1])*(b[2] - c[2]) + (c[1] - a[1])*(c[2] - a[2]);
+  var ny = (a[2] - b[2])*(a[0] + b[0]) + (b[2] - c[2])*(b[0] + c[0]) + (c[2] - a[2])*(c[0] + a[0]);
+  var nz = (a[0] - b[0])*(a[1] + b[1]) + (b[0] - c[0])*(b[1] + c[1]) + (c[0] - a[0])*(c[1] + a[1]);;
+
+  normals.push(nx, ny, nz);
+}
+
+// I think that this function should modify the points array
+function pulse() {
+  //for each triangle
+  for (var i = 0; i < (points.length)/3; i++) { //(points.length)/3 is the number of triangles. At the ith iteration we refer to the ith triangle.
+    //var triang = points.slice(i*3, i*3 + 3);
+    console.log("vertices before normal: ");
+    console.log(points[i*3]);
+    console.log(points[i*3 + 1]);
+    console.log(points[i*3 + 2]);
+    var n = normals[i];
+    for (var j = 0; j < 3; j++) { // for each vertex we sum the component of the normal
+      points[i*3 + j][0] += 0.1*n[0];
+      points[i*3 + j][1] += 0.1*n[1];
+      points[i*3 + j][2] += 0.1*n[2];
+      /*
+      for (var k = 0; k < 3; k++) { // for each coordinate
+        //we take each coordinate of each point of the triangle and we sum to it the correspondent coordinate of the normal vector of that triangle.
+        points[i*3 + j][k] = points[i*3 + j][k] + 0.5*n[k]; // TODO: THE n does not exist!
+      } */
+    }
+    console.log("vertices after normal: ");
+    console.log(points[i*3]);
+    console.log(points[i*3 + 1]);
+    console.log(points[i*3 + 2]);
+    console.log("--------------");
+    //now we add the normal vector to the
+  }
+
+}
+
 function poly(a, b, c)
 {
-  //console.log("abc = " + a + " " + b + " " + c);
-
-    // We need to parition the quad into two triangles in order for
-    // WebGL to be able to render it.  In this case, we create two
-    // triangles from the quad indices
-
-    //vertex color assigned by the index of the vertex
-
-
-    //points.push( vec3(vertices[a], vertices[b], vertices[c]) );
     points.push(vertices[a], vertices[b], vertices[c]);
-    //for ( var i = 0; i < indices.length; ++i ) {
-        //points.push( vertices[indices[i]] );
-        //console.log(indices[i] + " --> " + vertices[indices[i]]);
-        //console.log("nr of vertices = " + vertices.length);
-        //console.log("nr of points = " + points.length);
-        //colors.push(vec4(1.0, 1.0, 1.0, 1.0));
-        //console.log("nr of colors = " + colors.length);
-        //colors.push( vertexColors[indices[i]] );
+    newellMethod(vertices[a], vertices[b], vertices[c]);
 
-        // for solid colored faces use
-        //colors.push(vertexColors[a]);
-
-
-    //}
 }
