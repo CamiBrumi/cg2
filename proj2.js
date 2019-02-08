@@ -205,6 +205,12 @@ function main()
           case 'p':
               pulse();
               break;
+          case 'r':
+              theta -= 2;
+              break;
+          case 't':
+              alpha -=2;
+              break;
       }
 
       //render();
@@ -297,13 +303,13 @@ var id;
 
     //gl.enable(gl.DEPTH_TEST);
 
-  	var rotMatrix = rotate(0, vec3(-1, -1, 0));
-  	//var rotMatrix = rotateY(theta);
+  	var rotMatrixX = rotateX(theta);
+  	var rotMatrixY = rotateY(alpha); // TODO: I cannot rotate it by its Y axis!
   	//var rotMatrix2 = rotateX(45);
   	var translateMatrix = translate(tx, ty, tz);
   	//var tempMatrix = mult(rotMatrix, rotMatrix2);
   	//var ctMatrix = mult(translateMatrix, tempMatrix);
-  	var ctMatrix = mult(translateMatrix, rotMatrix);
+  	var ctMatrix = mult(translateMatrix, rotMatrixX, rotMatrixY); //// TODO: Do we want rotation and translation at the same time?
 
   	//theta += 0.05;
   	//alpha += 0.005;
