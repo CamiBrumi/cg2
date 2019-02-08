@@ -17,11 +17,7 @@ var vertices = [];
 var polygons = [];
 var points = [];
 var normals = [];
-var colors = [
-  vec4(1.0, 1.0, 1.0, 1.0),
-  vec4(1.0, 1.0, 1.0, 1.0),
-  vec4(1.0, 1.0, 1.0, 1.0)
-];
+var colors = [];
 
 //perspective stuff
 var tp;
@@ -35,16 +31,14 @@ var tx = 0;
 var ty = 0;
 var tz = 0;
 
-
-function main()
-{
+function setupFileReader() {
   // We process the data in the file
   var fileInput = document.getElementById('fileInput');
   var inputDiv = document.getElementById('inputDiv');
   fileInput.addEventListener('change', function (e) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     vertices = [];
-    //colors = [];
+    colors = [];
     polygons = [];
     points = [];
     normals = [];
@@ -124,7 +118,7 @@ function main()
           gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         	//Necessary for animation
-        	render();
+        	//render();
 
 
         }
@@ -133,6 +127,11 @@ function main()
     reader.readAsText(file);
 
   });
+}
+
+function main()
+{
+
 
 
 	// Retrieve <canvas> element
@@ -186,30 +185,33 @@ function main()
       var key = event.key;
       switch(key) {
           case 'd':
-              tx -= 0.02;
+              tx -= 0.08;
               break;
           case 'a':
-              tx += 0.02; //same
+              tx += 0.08; //same
               break;
           case 'w':
-              ty -= 0.02;
+              ty -= 0.08;
               break;
           case 's':
-              ty += 0.02; //same
+              ty += 0.08; //same
               break;
           case '+':
-              tz -= 0.02;
+              tz -= 0.08;
               break;
           case '-':
-              tz += 0.02;
+              tz += 0.08;
               break;
           case 'p':
               pulse();
               break;
       }
 
-      render();
+      //render();
   }
+
+  setupFileReader();
+  render();
 
 
 
@@ -222,6 +224,14 @@ var id;
    // Clear the canvas AND the depth buffer.
    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   //console.log(points.length);
+
+  var vBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
+
+  var vPosition = gl.getAttribLocation(program, "vPosition");
+  gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vPosition);
 
   var offsetLoc = gl.getUniformLocation(program, "vPointSize");
   gl.uniform1f(offsetLoc, 10.0);
@@ -238,9 +248,10 @@ var id;
     //console.log("----" + i);
     //console.log(points[i].length);
     //console.log(colors.length);
-    var triang = points.slice(i*3, i*3 + 3);
+    //var triang = points.slice(i*3, i*3 + 3);
     //console.log(triang);
 
+    /*
     //Create the buffer object
     var vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
@@ -315,7 +326,8 @@ var id;
     //gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   	//gl.drawArrays(gl.POINTS, 0, points.length);
-  	gl.drawArrays(gl.LINE_LOOP, 0, triang.length);
+  	//gl.drawArrays(gl.LINE_LOOP, 0, triang.length);
+    gl.drawArrays(gl.LINE_LOOP, i*3, 3);
 
   	//console.log(theta);
 
@@ -324,9 +336,10 @@ var id;
   	//}
   	//else
   	//{
-  		//id = requestAnimationFrame(render);
+
   	//}
   }
+  id = requestAnimationFrame(render);
 
 }
 
@@ -372,6 +385,7 @@ function pulse() {
 function poly(a, b, c)
 {
     points.push(vertices[a], vertices[b], vertices[c]);
-    newellMethod(vertices[a], vertices[b], vertices[c]);
+    colors.push(vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0));
+    //newellMethod(vertices[a], vertices[b], vertices[c]);
 
 }
