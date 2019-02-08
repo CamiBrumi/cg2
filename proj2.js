@@ -184,32 +184,29 @@ function main()
   window.onkeypress = function(event) {
       var key = event.key;
       switch(key) {
-          case 'd':
+          case 'c': // Translate your wireframe in the negative x direction
               tx -= 0.08;
               break;
-          case 'a':
-              tx += 0.08; //same
+          case 'x': // Translate your wireframe in the positive x direction
+              tx += 0.08;
               break;
-          case 'w':
+          case 'u': // Translate your wireframe in the negative y direction
               ty -= 0.08;
               break;
-          case 's':
-              ty += 0.08; //same
+          case 'y': // Translate your wireframe in the positive y direction
+              ty += 0.08;
               break;
-          case '+':
+          case 'a': // Translate your wireframe in the negative z direction
               tz -= 0.08;
               break;
-          case '-':
+          case 'z': // Translate your wireframe in the positive z direction
               tz += 0.08;
               break;
           case 'p':
               pulse();
               break;
           case 'r':
-              theta -= 2;
-              break;
-          case 't':
-              alpha -=2;
+              theta += 2;
               break;
       }
 
@@ -304,12 +301,12 @@ var id;
     //gl.enable(gl.DEPTH_TEST);
 
   	var rotMatrixX = rotateX(theta);
-  	var rotMatrixY = rotateY(alpha); // TODO: I cannot rotate it by its Y axis!
+  	//var rotMatrixY = rotateY(alpha); // TODO: I cannot rotate it by its Y axis!
   	//var rotMatrix2 = rotateX(45);
   	var translateMatrix = translate(tx, ty, tz);
   	//var tempMatrix = mult(rotMatrix, rotMatrix2);
   	//var ctMatrix = mult(translateMatrix, tempMatrix);
-  	var ctMatrix = mult(translateMatrix, rotMatrixX, rotMatrixY); //// TODO: Do we want rotation and translation at the same time?
+  	var ctMatrix = mult(translateMatrix, rotMatrixX); //// TODO: Do we want rotation and translation at the same time?
 
   	//theta += 0.05;
   	//alpha += 0.005;
@@ -355,7 +352,7 @@ function newellMethod(a, b, c) {
   var ny = (a[2] - b[2])*(a[0] + b[0]) + (b[2] - c[2])*(b[0] + c[0]) + (c[2] - a[2])*(c[0] + a[0]);
   var nz = (a[0] - b[0])*(a[1] + b[1]) + (b[0] - c[0])*(b[1] + c[1]) + (c[0] - a[0])*(c[1] + a[1]);;
 
-  normals.push(nx, ny, nz);
+  normals.push(vec3(nx, ny, nz));
 }
 
 // I think that this function should modify the points array
@@ -363,11 +360,12 @@ function pulse() {
   //for each triangle
   for (var i = 0; i < (points.length)/3; i++) { //(points.length)/3 is the number of triangles. At the ith iteration we refer to the ith triangle.
     //var triang = points.slice(i*3, i*3 + 3);
-    console.log("vertices before normal: ");
-    console.log(points[i*3]);
-    console.log(points[i*3 + 1]);
-    console.log(points[i*3 + 2]);
+    //console.log("vertices before normal: ");
+    //console.log(points[i*3]);
+    //console.log(points[i*3 + 1]);
+    //console.log(points[i*3 + 2]);
     var n = normals[i];
+    //console.log("normal " + n);
     for (var j = 0; j < 3; j++) { // for each vertex we sum the component of the normal
       points[i*3 + j][0] += 0.1*n[0];
       points[i*3 + j][1] += 0.1*n[1];
@@ -378,11 +376,11 @@ function pulse() {
         points[i*3 + j][k] = points[i*3 + j][k] + 0.5*n[k]; // TODO: THE n does not exist!
       } */
     }
-    console.log("vertices after normal: ");
-    console.log(points[i*3]);
-    console.log(points[i*3 + 1]);
-    console.log(points[i*3 + 2]);
-    console.log("--------------");
+    //console.log("vertices after normal: ");
+    //console.log(points[i*3]);
+    //console.log(points[i*3 + 1]);
+    //console.log(points[i*3 + 2]);
+    //console.log("--------------");
     //now we add the normal vector to the
   }
 
