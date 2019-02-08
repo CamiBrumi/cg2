@@ -222,6 +222,18 @@ var id;
    // Clear the canvas AND the depth buffer.
    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   //console.log(points.length);
+
+  var offsetLoc = gl.getUniformLocation(program, "vPointSize");
+  gl.uniform1f(offsetLoc, 10.0);
+
+  var cBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+
+  var vColor = gl.getAttribLocation(program, "vColor");
+  gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vColor);
+
   for (var i = 0; i < (points.length)/3; i++) {
     //console.log("----" + i);
     //console.log(points[i].length);
@@ -237,7 +249,7 @@ var id;
     var vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
-
+/*
     var offsetLoc = gl.getUniformLocation(program, "vPointSize");
     gl.uniform1f(offsetLoc, 10.0);
 
@@ -247,7 +259,7 @@ var id;
 
     var vColor = gl.getAttribLocation(program, "vColor");
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vColor);
+    gl.enableVertexAttribArray(vColor); */
 
     //This is how we handle extents
     //We need to change this to see things once we've added perspective
@@ -258,11 +270,12 @@ var id;
     var zDist = Math.abs(near-far);
     var eyeDist = Math.max(xDist, yDist, zDist);
 
-    var  fovy = Math.atan((Math.max(xDist, yDist)/2)/eyeDist); // ymax/zmin // height of the bounding box div by 2 then also only distance from eye to the near plane
-    fovy = ((fovy*180)/Math.PI)*2;
+    //Math.atan((Math.max(xDist, yDist)/2)/eyeDist);
+    var  fovy = 30; // ymax/zmin // height of the bounding box div by 2 then also only distance from eye to the near plane
+    //fovy = ((fovy*180)/Math.PI)*2;
 
     var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    var thisProj = perspective(fovy, aspect, 0.1, 100);
+    var thisProj = perspective(fovy, aspect, 0.1, 10000);
 
     var projMatrix = gl.getUniformLocation(program, 'projMatrix');
     gl.uniformMatrix4fv(projMatrix, false, flatten(thisProj));
@@ -288,8 +301,8 @@ var id;
     // 2. based on extents where do we put the eye and where does the eye look : view ctMatrix
     // 3. based on extents what is fovy : proj matrix
 
-    var at = vec3((r+l)/2, (tp+bottom)/2, (near+far)/2); // should be out from the viewing frustum
-  	var eye = vec3(at[0], at[1], eyeDist + near*2);
+    var at = vec3((r+l)/2, (tp+bottom)/2, 0); // should be out from the viewing frustum (near+far)/2
+  	var eye = vec3(at[0], at[1], Math.max(r-l, tp-bottom)*2.5 + near); //eyeDist + near*2
   	var up = vec3(0.0, 1.0, 0.0);
   	var viewMatrix = lookAt(eye, at, up);
 

@@ -15,6 +15,7 @@
 	varying vec4 fColor;
 	void main() {
 		gl_Position = projMatrix * viewMatrix * modelMatrix * vPosition;
+    //console.log(gl_position);
 		gl_PointSize = vPointSize;
 		fColor = vColor;
   	}
