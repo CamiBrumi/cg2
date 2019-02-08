@@ -392,6 +392,6 @@ function poly(a, b, c)
 {
     points.push(vertices[a], vertices[b], vertices[c]);
     colors.push(vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0));
-    //newellMethod(vertices[a], vertices[b], vertices[c]);
+    newellMethod(vertices[a], vertices[b], vertices[c]);
 
 }
