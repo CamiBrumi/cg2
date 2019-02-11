@@ -39,21 +39,30 @@ var tz = 0;
 // This function initializes all the variables. It is called every time we load a new file.
 function initializeVars() {
 
-    vertices = [];
-    colors = [];
-    polygons = [];
-    points = [];
-    normals = [];
-    p = 0;
-    theta = 0;
-    tx = 0;
-    ty = 0;
-    tz = 0;
-    theta = 0;
-    mode.pulseMode = false;
-    mode.inwards = false;
-    mode.outwards = true;
-    mode.rotMode = false;
+  vertices = [];
+  colors = [];
+  polygons = [];
+  points = [];
+  normals = [];
+  p = 0;
+  theta = 0;
+  tx = 0;
+  ty = 0;
+  tz = 0;
+  theta = 0;
+  mode.translateMode = false;
+  xPosMode=false;
+  xNegMode=false;
+  yPosMode=false;
+  yNegMode=false;
+  zPosMode=false;
+  zNegMode=false;
+  rotMode=false;
+
+  mode.pulseMode = false;
+  mode.inwards = false;
+  mode.outwards = true;
+  mode.rotMode = false;
 }
 
 // This function sets what should happen when a new file is loaded.
