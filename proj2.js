@@ -26,10 +26,9 @@ var l;
 var near;
 var far;
 var p = 0;
-var pulseMode = false;
-var inwards = false;
-var outwards = true;
-
+var mode = {pulseMode:false, inwards:false, outwards:true, translateMode:false, xPosMode:false, xNegMode:false, yPosMode:false, yNegMode:false, zPosMode:false, zNegMode:false, rotMode:false};
+const TRANSLATE_CONST = 0.001;
+const PULSE_CONST = 0.005;
 var tx = 0;
 var ty = 0;
 var tz = 0;
@@ -46,9 +45,9 @@ function setupFileReader() {
         points = [];
         normals = [];
         p = 0;
-        pulseMode = false;
-        inwards = false;
-        outwards = true;
+        mode.pulseMode = false;
+        mode.inwards = false;
+        mode.outwards = true;
         var file = fileInput.files[0];
         var reader = new FileReader();
         reader.onload = function (e) {
@@ -191,29 +190,75 @@ function main() {
         var key = event.key;
         switch (key) {
             case 'c': // Translate your wireframe in the negative x direction
-                tx -= 0.08;
+                if (mode.translateMode) {
+                    mode.translateMode = false;
+                    mode.xNegMode = false;
+                } else {
+                    mode.translateMode = true;
+                    mode.xNegMode = true;
+                    mode.xPosMode = false;
+                }
                 break;
             case 'x': // Translate your wireframe in the positive x direction
-                tx += 0.08;
+                if (mode.translateMode) {
+                    mode.translateMode = false;
+                    mode.xPosMode = false;
+                } else {
+                    mode.translateMode = true;
+                    mode.xNegMode = false;
+                    mode.xPosMode = true;
+                }
                 break;
             case 'u': // Translate your wireframe in the negative y direction
-                ty -= 0.08;
+                if (mode.translateMode) {
+                    mode.translateMode = false;
+                    mode.yNegMode = false;
+                } else {
+                    mode.translateMode = true;
+                    mode.yNegMode = true;
+                    mode.yPosMode = false;
+                }
                 break;
             case 'y': // Translate your wireframe in the positive y direction
-                ty += 0.08;
+                if (mode.translateMode) {
+                    mode.translateMode = false;
+                    mode.yPosMode = false;
+                } else {
+                    mode.translateMode = true;
+                    mode.yNegMode = false;
+                    mode.yPosMode = true;
+                }
                 break;
             case 'a': // Translate your wireframe in the negative z direction
-                tz -= 0.08;
+                if (mode.translateMode) {
+                    mode.translateMode = false;
+                    mode.zNegMode = false;
+                } else {
+                    mode.translateMode = true;
+                    mode.zNegMode = true;
+                    mode.zPosMode = false;
+                }
                 break;
             case 'z': // Translate your wireframe in the positive z direction
-                tz += 0.08;
+                if (mode.translateMode) {
+                    mode.translateMode = false;
+                    mode.zPosMode = false;
+                } else {
+                    mode.translateMode = true;
+                    mode.zNegMode = false;
+                    mode.zPosMode = true;
+                }
                 break;
             case 'p':
-                if (pulseMode) {pulseMode = false;}
-                else {pulseMode = true;}
+                if (mode.pulseMode) {mode.pulseMode = false;}
+                else {mode.pulseMode = true;}
                 break;
             case 'r':
-                theta += 2;
+                if (mode.rotMode) {
+                    mode.rotMode = false;
+                } else {
+                    mode.rotMode = true;
+                }
                 break;
         }
 
@@ -255,6 +300,47 @@ function render() {
     var vColor = gl.getAttribLocation(program, "vColor");
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vColor);
+
+    if (mode.translateMode) {
+        if (mode.xPosMode) {
+            tx += TRANSLATE_CONST;
+        } else if (mode.xNegMode) {
+            tx -= TRANSLATE_CONST;
+        }
+
+        if (mode.yPosMode) {
+            ty += TRANSLATE_CONST;
+        } else if (mode.yNegMode) {
+            ty -= TRANSLATE_CONST;
+        }
+
+        if (mode.zPosMode) {
+            tz += TRANSLATE_CONST;
+        } else if (mode.zNegMode) {
+            tz -= TRANSLATE_CONST;
+        }
+    }
+
+    if (mode.pulseMode) {
+        if (mode.outwards) {
+            p += PULSE_CONST;
+        } else if (mode.inwards) {
+            p-= PULSE_CONST;
+        }
+
+        if (p > 0.15) {
+            mode.inwards = true;
+            mode.outwards = false;
+        }
+        if (p < 0) {
+            mode.inwards = false;
+            mode.outwards = true;
+        }
+    }
+
+    if (mode.rotMode) {
+        theta += 1;
+    }
 
     for (var i = 0; i < (points.length) / 3; i++) {
         //console.log("----" + i);
@@ -315,26 +401,8 @@ function render() {
         //var rotMatrix2 = rotateX(45);
 
 
-        if (pulseMode) {
-            if (outwards) {
-                p += 0.0005;
-            } else if (inwards) {
-                p-= 0.0005;
-            }
 
-            var d = 3;
-            if (zDist > 1) {d = 0.5;}
-            if (p > zDist/d) {
-                inwards = true;
-                outwards = false;
-            }
-            if (p < 0) {
-                inwards = false;
-                outwards = true;
-            }
-        }
-
-        var xdiff =  r - l;
+        var xdiff =  l - r;
         var ydiff =  tp - bottom;
         var zdiff =  near - far;
 
@@ -342,7 +410,7 @@ function render() {
         //var translateMatrix = translate(p * (normals[i][0] * xdiff), p * (normals[i][1] * ydiff), p * (normals[i][2] * zdiff));
         //var tempMatrix = mult(rotMatrix, rotMatrix2);
         //var ctMatrix = mult(translateMatrix, tempMatrix);
-        var ctMatrix = mult(translateMatrix, rotMatrixX); //// TODO: Do we want rotation and translation at the same time?
+        var ctMatrix = mult(translateMatrix, rotMatrixX);
 
         //theta += 0.05;
         //alpha += 0.005;
@@ -389,7 +457,7 @@ function newellMethod(a, b, c) {
     var nz = (a[0] - b[0]) * (a[1] + b[1]) + (b[0] - c[0]) * (b[1] + c[1]) + (c[0] - a[0]) * (c[1] + a[1]);
 
 
-    normals.push(vec3(nx, ny, nz));
+    normals.push(vec3(-nx, ny, nz)); // the minus in the x coordinate is because In this way I am getting the the desired outward pulsing effect required by the project
 }
 
 // I think that this function should modify the points array
