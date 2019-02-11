@@ -129,8 +129,9 @@ function setupFileReader() {
                 console.log(near);
                 console.log(far);
                 console.log(Math.abs(near - far));
-
+                // here calculate the pulse constant::::
             }
+
 
         };
         reader.readAsText(file);
@@ -406,7 +407,8 @@ function render() {
         var ydiff =  tp - bottom;
         var zdiff =  near - far;
 
-        var translateMatrix = translate(p * (normals[i][0] * xdiff) + (xdiff * tx), p * (normals[i][1] * ydiff) + (ydiff * ty), p * (normals[i][2] * zdiff) + (zdiff * tz));
+        //var translateMatrix = translate(p * (normals[i][0] * xdiff) + (xdiff * tx), p * (normals[i][1] * ydiff) + (ydiff * ty), p * (normals[i][2] * zdiff) + (zdiff * tz));
+        var translateMatrix = translate(p * (normals[i][0]) + (xdiff * tx), p * (normals[i][1]) + (ydiff * ty), p * (normals[i][2] ) + (zdiff * tz));
         //var translateMatrix = translate(p * (normals[i][0] * xdiff), p * (normals[i][1] * ydiff), p * (normals[i][2] * zdiff));
         //var tempMatrix = mult(rotMatrix, rotMatrix2);
         //var ctMatrix = mult(translateMatrix, tempMatrix);
@@ -457,7 +459,7 @@ function newellMethod(a, b, c) {
     var nz = (a[0] - b[0]) * (a[1] + b[1]) + (b[0] - c[0]) * (b[1] + c[1]) + (c[0] - a[0]) * (c[1] + a[1]);
 
 
-    normals.push(vec3(-nx, ny, nz)); // the minus in the x coordinate is because In this way I am getting the the desired outward pulsing effect required by the project
+    normals.push(vec3(nx, ny, nz)); // the minus in the x coordinate is because In this way I am getting the the desired outward pulsing effect required by the project
 }
 
 // I think that this function should modify the points array
