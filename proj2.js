@@ -131,15 +131,7 @@ function setupFileReader() {
                 // Clear the canvas AND the depth buffer.
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-                //Necessary for animation
-                //render();
-                //console.log(near);
-                //console.log(far);
-                console.log(Math.abs(r - l));
-                console.log(Math.abs(tp - bottom));
-                console.log(Math.abs(near - far));
 
-                // here calculate the pulse constant::::
             }
 
 
@@ -163,40 +155,12 @@ function main() {
     }
 
     // Initialize shaders
-    // This function call will create a shader, upload the GLSL source, and compile the shader
     program = initShaders(gl, "vshader", "fshader");
-
-    // We tell WebGL which shader program to execute.
     gl.useProgram(program);
-
-    //Set up the viewport
-    //x, y - specify the lower-left corner of the viewport rectangle (in pixels)
-    //In WebGL, x and y are specified in the <canvas> coordinate system
-    //width, height - specify the width and height of the viewport (in pixels)
-    //canvas is the window, and viewport is the viewing area within that window
-    //This tells WebGL the -1 +1 clip space maps to 0 <-> gl.canvas.width for x and 0 <-> gl.canvas.height for y
     gl.viewport(0, 0, canvas.width, canvas.height);
 
 
-    /**********************************
-     * Points, Lines, and Fill
-     **********************************/
-
-    /*** VERTEX DATA ***/
-    //Define the positions of our points
-    //Note how points are in a range from 0 to 1
-    /*
-      points = [];
-      colors = [];
-
-      quad( 1, 0, 3, 2 );
-      quad( 2, 3, 7, 6 );
-      quad( 3, 0, 4, 7 );
-      quad( 6, 5, 1, 2 );
-      quad( 4, 5, 6, 7 );
-      quad( 5, 4, 0, 1 ); */
-
-    //this is the code that handles thevent when a key is pressed
+    //this is the code that handles the event when a key is pressed
     window.onkeypress = function (event) {
         var key = event.key;
         switch (key) {
@@ -363,82 +327,20 @@ function render() {
     }
 
     for (var i = 0; i < (points.length) / 3; i++) {
-        //console.log("----" + i);
-        //console.log(points[i].length);
-        //console.log(colors.length);
-        //var triang = points.slice(i*3, i*3 + 3);
-        //console.log(triang);
-
-        /*
-        //Create the buffer object
-        var vBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, flatten(triang), gl.STATIC_DRAW);
-
-        var vPosition = gl.getAttribLocation(program, "vPosition");
-        gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(vPosition);
-    /*
-        var offsetLoc = gl.getUniformLocation(program, "vPointSize");
-        gl.uniform1f(offsetLoc, 10.0);
-
-        var cBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
-
-        var vColor = gl.getAttribLocation(program, "vColor");
-        gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(vColor); */
-
-        //This is how we handle extents
-        //We need to change this to see things once we've added perspective
-        //var thisProj = ortho(-5, 5, -5, 5, -5, 100);
-
-        // var xDist = Math.abs(r - l);
-        // var yDist = Math.abs(tp - bottom);
-        // var zDist = Math.abs(near - far);
-        // var maxDist = Math.max(xDist, yDist, zDist);
-        //console.log(zDist);
-
-        //Math.atan((Math.max(xDist, yDist)/2)/eyeDist);
-        var fovy = 30; // ymax/zmin // height of the bounding box div by 2 then also only distance from eye to the near plane
-        //fovy = ((fovy*180)/Math.PI)*2;
+        var fovy = 30;
 
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
         var thisProj = perspective(fovy, aspect, 0.1, 10000);
 
         var projMatrix = gl.getUniformLocation(program, 'projMatrix');
         gl.uniformMatrix4fv(projMatrix, false, flatten(thisProj));
-        // for proj perspective(fovy, 1, 0, zDist)
-
-        // Set clear color
-        //gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
-        //gl.enable(gl.DEPTH_TEST);
 
         var rotMatrixX = rotateX(theta);
-        //var rotMatrixY = rotateY(alpha); // TODO: I cannot rotate it by its Y axis!
-        //var rotMatrix2 = rotateX(45);
-
-
-
-        var xdiff =  l - r;
-        var ydiff =  tp - bottom;
-        var zdiff =  near - far;
 
         //var translateMatrix = translate(p * (normals[i][0] * xdiff) + (xdiff * tx), p * (normals[i][1] * ydiff) + (ydiff * ty), p * (normals[i][2] * zdiff) + (zdiff * tz));
         var translateMatrix = translate(p * (normals[i][0]*multiplier) + (maxDist * tx), p * (normals[i][1]*multiplier) + (maxDist * ty), p * (normals[i][2]*multiplier) + (maxDist * tz));
-        //var translateMatrix = translate(p * (normals[i][0] * xdiff), p * (normals[i][1] * ydiff), p * (normals[i][2] * zdiff));
-        //var tempMatrix = mult(rotMatrix, rotMatrix2);
-        //var ctMatrix = mult(translateMatrix, tempMatrix);
         var ctMatrix = mult(translateMatrix, rotMatrixX);
 
-        //theta += 0.05;
-        //alpha += 0.005;
-
-        // 1. get extents, min max xyz
-        // 2. based on extents where do we put the eye and where does the eye look : view ctMatrix
-        // 3. based on extents what is fovy : proj matrix
 
         var at = vec3((r + l) / 2, (tp + bottom) / 2, 0); // should be out from the viewing frustum (near+far)/2
         var eye = vec3(at[0], at[1], Math.max(r - l, tp - bottom) * 2.5 + near); //eyeDist + near*2
@@ -451,21 +353,8 @@ function render() {
         var viewMatrixLoc = gl.getUniformLocation(program, "viewMatrix");
         gl.uniformMatrix4fv(viewMatrixLoc, false, flatten(viewMatrix));
 
-        //gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        //gl.drawArrays(gl.POINTS, 0, points.length);
-        //gl.drawArrays(gl.LINE_LOOP, 0, triang.length);
         gl.drawArrays(gl.LINE_LOOP, i * 3, 3);
 
-        //console.log(theta);
-
-        //if(theta < -90) {
-        //	cancelAnimationFrame(id);
-        //}
-        //else
-        //{
-
-        //}
     }
     id = requestAnimationFrame(render);
 
@@ -476,42 +365,12 @@ function newellMethod(a, b, c) {
     var nx = (a[1] - b[1]) * (a[2] + b[2]) + (b[1] - c[1]) * (b[2] + c[2]) + (c[1] - a[1]) * (c[2] + a[2]);
     var ny = (a[2] - b[2]) * (a[0] + b[0]) + (b[2] - c[2]) * (b[0] + c[0]) + (c[2] - a[2]) * (c[0] + a[0]);
     var nz = (a[0] - b[0]) * (a[1] + b[1]) + (b[0] - c[0]) * (b[1] + c[1]) + (c[0] - a[0]) * (c[1] + a[1]);
-    //console.log(vec3(nx, ny, nz));
+
     var norm = Math.sqrt(nx*nx + ny*ny + nz*nz);
-    //console.log(norm)
+
     normals.push(vec3(nx/norm, ny/norm, nz/norm)); // normalized normal vectors
 }
 
-// I think that this function should modify the points array
-function pulse() {
-    //for each triangle
-    for (var i = 0; i < (points.length) / 3; i++) { //(points.length)/3 is the number of triangles. At the ith iteration we refer to the ith triangle.
-        //var triang = points.slice(i*3, i*3 + 3);
-        //console.log("vertices before normal: ");
-        //console.log(points[i*3]);
-        //console.log(points[i*3 + 1]);
-        //console.log(points[i*3 + 2]);
-        var n = normals[i];
-        //console.log("normal " + n);
-        for (var j = 0; j < 3; j++) { // for each vertex we sum the component of the normal
-            points[i * 3 + j][0] += 0.1 * n[0];
-            points[i * 3 + j][1] += 0.1 * n[1];
-            points[i * 3 + j][2] += 0.1 * n[2];
-            /*
-            for (var k = 0; k < 3; k++) { // for each coordinate
-              //we take each coordinate of each point of the triangle and we sum to it the correspondent coordinate of the normal vector of that triangle.
-              points[i*3 + j][k] = points[i*3 + j][k] + 0.5*n[k]; // TODO: THE n does not exist!
-            } */
-        }
-        //console.log("vertices after normal: ");
-        //console.log(points[i*3]);
-        //console.log(points[i*3 + 1]);
-        //console.log(points[i*3 + 2]);
-        //console.log("--------------");
-        //now we add the normal vector to the
-    }
-
-}
 
 function poly(a, b, c) {
     points.push(vertices[a], vertices[b], vertices[c]);
