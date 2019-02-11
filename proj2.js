@@ -27,11 +27,32 @@ var near;
 var far;
 var p = 0;
 var mode = {pulseMode:false, inwards:false, outwards:true, translateMode:false, xPosMode:false, xNegMode:false, yPosMode:false, yNegMode:false, zPosMode:false, zNegMode:false, rotMode:false};
-const TRANSLATE_CONST = 0.001;
-const PULSE_CONST = 0.005;
+const TRANSLATE_CONST = 0.05;
+const PULSE_CONST = 0.01;
+const ANGLE_CONST = 3;
+const PULSE_LIMIT = 0.15;
 var tx = 0;
 var ty = 0;
 var tz = 0;
+
+function initializeVars() {
+
+    vertices = [];
+    colors = [];
+    polygons = [];
+    points = [];
+    normals = [];
+    p = 0;
+    theta = 0;
+    tx = 0;
+    ty = 0;
+    tz = 0;
+    theta = 0;
+    mode.pulseMode = false;
+    mode.inwards = false;
+    mode.outwards = true;
+    mode.rotMode = false;
+}
 
 function setupFileReader() {
     // We process the data in the file
@@ -39,15 +60,7 @@ function setupFileReader() {
     var inputDiv = document.getElementById('inputDiv');
     fileInput.addEventListener('change', function (e) {
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        vertices = [];
-        colors = [];
-        polygons = [];
-        points = [];
-        normals = [];
-        p = 0;
-        mode.pulseMode = false;
-        mode.inwards = false;
-        mode.outwards = true;
+        initializeVars();
         var file = fileInput.files[0];
         var reader = new FileReader();
         reader.onload = function (e) {
@@ -67,8 +80,6 @@ function setupFileReader() {
                     return parseInt(v);
                 });
                 var nrPolygons = nrPolygonsArr[0];
-                //console.log(nrVertices);
-                //console.log(nrPolygons);
 
 
                 // what initial values
@@ -104,12 +115,8 @@ function setupFileReader() {
                     near = Math.max(z, near);
 
 
-                    //colors.push(vec4(1.0, 0.0, 0.0, 1.0));
-                    //console.log(coords[0] + " " + coords[1] + " " + coords[2]);
                 }
-                //console.log(r + " ")
 
-                //console.log("---------------------------------");
                 const j = i;
                 for (i = j; i < nrPolygons + j; i++) {
                     var pols = data[i].split(" ");
@@ -117,7 +124,7 @@ function setupFileReader() {
                     poly(parseFloat(pols[1]), parseFloat(pols[2]), parseFloat(pols[3]));
                     //console.log(pols[1] + " " + pols[2] + " " + pols[3]);
                 }
-                console.log(normals);
+                //console.log(normals);
 
                 gl.enable(gl.DEPTH_TEST);
 
@@ -126,9 +133,12 @@ function setupFileReader() {
 
                 //Necessary for animation
                 //render();
-                console.log(near);
-                console.log(far);
+                //console.log(near);
+                //console.log(far);
+                console.log(Math.abs(r - l));
+                console.log(Math.abs(tp - bottom));
                 console.log(Math.abs(near - far));
+
                 // here calculate the pulse constant::::
             }
 
@@ -277,6 +287,15 @@ function main() {
 var id;
 
 function render() {
+    var xDist = Math.abs(r - l);
+    var yDist = Math.abs(tp - bottom);
+    var zDist = Math.abs(near - far);
+    var maxDist = Math.max(xDist, yDist, zDist);
+    var multiplier = 0.5;
+    if (maxDist > 5) {
+        multiplier = maxDist;
+    }
+
     gl.enable(gl.DEPTH_TEST);
 
     // Clear the canvas AND the depth buffer.
@@ -329,7 +348,7 @@ function render() {
             p-= PULSE_CONST;
         }
 
-        if (p > 0.15) {
+        if (p > PULSE_LIMIT) {
             mode.inwards = true;
             mode.outwards = false;
         }
@@ -340,7 +359,7 @@ function render() {
     }
 
     if (mode.rotMode) {
-        theta += 1;
+        theta += ANGLE_CONST;
     }
 
     for (var i = 0; i < (points.length) / 3; i++) {
@@ -375,10 +394,10 @@ function render() {
         //We need to change this to see things once we've added perspective
         //var thisProj = ortho(-5, 5, -5, 5, -5, 100);
 
-        var xDist = Math.abs(r - l);
-        var yDist = Math.abs(tp - bottom);
-        var zDist = Math.abs(near - far);
-        var eyeDist = Math.max(xDist, yDist, zDist);
+        // var xDist = Math.abs(r - l);
+        // var yDist = Math.abs(tp - bottom);
+        // var zDist = Math.abs(near - far);
+        // var maxDist = Math.max(xDist, yDist, zDist);
         //console.log(zDist);
 
         //Math.atan((Math.max(xDist, yDist)/2)/eyeDist);
@@ -408,7 +427,7 @@ function render() {
         var zdiff =  near - far;
 
         //var translateMatrix = translate(p * (normals[i][0] * xdiff) + (xdiff * tx), p * (normals[i][1] * ydiff) + (ydiff * ty), p * (normals[i][2] * zdiff) + (zdiff * tz));
-        var translateMatrix = translate(p * (normals[i][0]) + (xdiff * tx), p * (normals[i][1]) + (ydiff * ty), p * (normals[i][2] ) + (zdiff * tz));
+        var translateMatrix = translate(p * (normals[i][0]*multiplier) + (maxDist * tx), p * (normals[i][1]*multiplier) + (maxDist * ty), p * (normals[i][2]*multiplier) + (maxDist * tz));
         //var translateMatrix = translate(p * (normals[i][0] * xdiff), p * (normals[i][1] * ydiff), p * (normals[i][2] * zdiff));
         //var tempMatrix = mult(rotMatrix, rotMatrix2);
         //var ctMatrix = mult(translateMatrix, tempMatrix);
@@ -457,9 +476,10 @@ function newellMethod(a, b, c) {
     var nx = (a[1] - b[1]) * (a[2] + b[2]) + (b[1] - c[1]) * (b[2] + c[2]) + (c[1] - a[1]) * (c[2] + a[2]);
     var ny = (a[2] - b[2]) * (a[0] + b[0]) + (b[2] - c[2]) * (b[0] + c[0]) + (c[2] - a[2]) * (c[0] + a[0]);
     var nz = (a[0] - b[0]) * (a[1] + b[1]) + (b[0] - c[0]) * (b[1] + c[1]) + (c[0] - a[0]) * (c[1] + a[1]);
-
-
-    normals.push(vec3(nx, ny, nz)); // the minus in the x coordinate is because In this way I am getting the the desired outward pulsing effect required by the project
+    //console.log(vec3(nx, ny, nz));
+    var norm = Math.sqrt(nx*nx + ny*ny + nz*nz);
+    //console.log(norm)
+    normals.push(vec3(nx/norm, ny/norm, nz/norm)); // normalized normal vectors
 }
 
 // I think that this function should modify the points array
