@@ -35,6 +35,8 @@ var tx = 0;
 var ty = 0;
 var tz = 0;
 
+
+// This function initializes all the variables. It is called every time we load a new file.
 function initializeVars() {
 
     vertices = [];
@@ -54,6 +56,8 @@ function initializeVars() {
     mode.rotMode = false;
 }
 
+// This function sets what should happen when a new file is loaded.
+// Here we parse the data in the file, we compute the triangles and their normals.
 function setupFileReader() {
     // We process the data in the file
     var fileInput = document.getElementById('fileInput');
@@ -81,8 +85,8 @@ function setupFileReader() {
                 });
                 var nrPolygons = nrPolygonsArr[0];
 
-
-                // what initial values
+                // Here we will compute the extents of the objects.
+                // initial values
                 var coords = data[9].split(" ");
                 var x = parseFloat(coords[0]);
                 var y = parseFloat(coords[1]);
@@ -116,6 +120,7 @@ function setupFileReader() {
 
 
                 }
+                // Here we compute the triangles.
 
                 const j = i;
                 for (i = j; i < nrPolygons + j; i++) {
@@ -224,7 +229,7 @@ function main() {
                     mode.zPosMode = true;
                 }
                 break;
-            case 'p':
+            case 'b':
                 if (mode.pulseMode) {mode.pulseMode = false;}
                 else {mode.pulseMode = true;}
                 break;
@@ -251,10 +256,11 @@ function main() {
 var id;
 
 function render() {
-    var xDist = Math.abs(r - l);
-    var yDist = Math.abs(tp - bottom);
-    var zDist = Math.abs(near - far);
-    var maxDist = Math.max(xDist, yDist, zDist);
+    var xDist = Math.abs(r - l); // how big is the object on the x axis
+    var yDist = Math.abs(tp - bottom); // how big is the object on the y axis
+    var zDist = Math.abs(near - far); // how big is the object on the z axis
+    var maxDist = Math.max(xDist, yDist, zDist); // biggest value of the above three
+    // we compute a multiplier in order to multiply the normal by it in the translate function.
     var multiplier = 0.5;
     if (maxDist > 5) {
         multiplier = maxDist;
@@ -264,7 +270,7 @@ function render() {
 
     // Clear the canvas AND the depth buffer.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    //console.log(points.length);
+
 
     var vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
@@ -285,6 +291,8 @@ function render() {
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vColor);
 
+
+    // here we check for the modes depending on what key the user has pressed.
     if (mode.translateMode) {
         if (mode.xPosMode) {
             tx += TRANSLATE_CONST;
@@ -326,7 +334,8 @@ function render() {
         theta += ANGLE_CONST;
     }
 
-    for (var i = 0; i < (points.length) / 3; i++) {
+
+    for (var i = 0; i < (points.length) / 3; i++) { // for every triangle
         var fovy = 30;
 
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -337,11 +346,10 @@ function render() {
 
         var rotMatrixX = rotateX(theta);
 
-        //var translateMatrix = translate(p * (normals[i][0] * xdiff) + (xdiff * tx), p * (normals[i][1] * ydiff) + (ydiff * ty), p * (normals[i][2] * zdiff) + (zdiff * tz));
         var translateMatrix = translate(p * (normals[i][0]*multiplier) + (maxDist * tx), p * (normals[i][1]*multiplier) + (maxDist * ty), p * (normals[i][2]*multiplier) + (maxDist * tz));
         var ctMatrix = mult(translateMatrix, rotMatrixX);
 
-
+        // we compute the view matrix
         var at = vec3((r + l) / 2, (tp + bottom) / 2, 0); // should be out from the viewing frustum (near+far)/2
         var eye = vec3(at[0], at[1], Math.max(r - l, tp - bottom) * 2.5 + near); //eyeDist + near*2
         var up = vec3(0.0, 1.0, 0.0);
@@ -371,7 +379,9 @@ function newellMethod(a, b, c) {
     normals.push(vec3(nx/norm, ny/norm, nz/norm)); // normalized normal vectors
 }
 
-
+// this function computes the triangles based on the information given in the file and it stores them in a new array called points
+// also updates the colors array and computes the normal vector of each vector
+// a, b, c are position in the vertices array (the vertices without an order)
 function poly(a, b, c) {
     points.push(vertices[a], vertices[b], vertices[c]);
     colors.push(vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0));
